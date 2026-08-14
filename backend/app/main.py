@@ -3,7 +3,6 @@ import sys
 import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-@app.get("/health")
 
 # Configure structured logging format
 logging.basicConfig(
@@ -13,9 +12,9 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)
     ]
 )
-
 logger = logging.getLogger("auraframe")
 
+# app must exist BEFORE anything references it (middleware, routers, routes)
 app = FastAPI(
     title="AuraFrame API",
     description="AI Creative Workspace Backend API",
@@ -35,10 +34,7 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start_time = time.time()
-    
-    # Log incoming request
     logger.info(f"--> Incoming {request.method} request to {request.url.path}")
-    
     try:
         response = await call_next(request)
         process_time = (time.time() - start_time) * 1000
@@ -67,10 +63,10 @@ async def root():
         "version": "0.1.0"
     }
 
+@app.get("/health")
 async def health_check():
     return {"status": "ok"}
 
-from app.modules.brief_analyst.router import router as brief_analyst_router
-
-# Add this right after app = FastAPI(...)
-app.include_router(brief_analyst_router)
+# --- Module routers - import AFTER app exists, then include ---
+from app.modules.auth.router import router as auth_router
+app.include_router(auth_router, prefix="/auth", tags=["auth"])

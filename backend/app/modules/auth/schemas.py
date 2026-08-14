@@ -1,18 +1,23 @@
 """
-Auth - data contracts.
+Auth module - data contracts.
 
-INPUT:  email + password
-OUTPUT: session token + user_id
+INPUT (signup/login): email + password
+OUTPUT (on success): access_token + user_id + email
 """
-from pydantic import BaseModel
-from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field
 
 
-class AuthInput(BaseModel):
-    # TODO: replace with real fields matching: email + password
-    placeholder: Optional[str] = None
+class SignupInput(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, description="Minimum 8 characters")
+
+
+class LoginInput(BaseModel):
+    email: EmailStr
+    password: str
 
 
 class AuthOutput(BaseModel):
-    # TODO: replace with real fields matching: session token + user_id
-    placeholder: Optional[str] = None
+    user_id: str
+    email: str
+    access_token: str

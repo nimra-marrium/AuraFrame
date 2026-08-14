@@ -1,18 +1,22 @@
 """
-Auth - HTTP interface. Stays THIN - delegates to service.py.
+Auth module - HTTP interface. Thin: only translates HTTP <-> service.py.
 """
 from fastapi import APIRouter, HTTPException
-from .schemas import AuthInput, AuthOutput
+from .schemas import SignupInput, LoginInput, AuthOutput
 from . import service
 
 router = APIRouter()
 
-
-@router.post("/", response_model=AuthOutput)
-def handle_auth(payload: AuthInput):
+@router.post("/signup", response_model=AuthOutput)
+def signup(payload: SignupInput):
     try:
-        return service.run(payload)
-    except NotImplementedError:
-        raise HTTPException(status_code=501, detail="Auth not implemented yet")
+        return service.signup(payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/login", response_model=AuthOutput)
+def login(payload: LoginInput):
+    try:
+        return service.login(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
