@@ -5,7 +5,6 @@ import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-
 # Configure structured logging format
 logging.basicConfig(
     level=logging.INFO,
@@ -104,3 +103,10 @@ app.include_router(
     prefix="/agents/brief",
     tags=["agents"]
 )
+
+
+from app.modules.visual_analyst.router import router as visual_analyst_router
+app.include_router(visual_analyst_router, prefix="/agents/visual", tags=["agents"])
+
+from app.modules.collective_analyst.router import router as collective_analyst_router
+app.include_router(collective_analyst_router, prefix="/agents/collective", tags=["agents"])
