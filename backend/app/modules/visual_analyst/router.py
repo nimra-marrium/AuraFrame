@@ -1,16 +1,11 @@
-"""
-Visual Analyst Agent - HTTP interface. Thin: only translates HTTP <-> service.py.
-"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+
 from .schemas import VisualAnalystInput, VisualAnalystOutput
-from . import service
+from .service import run
 
 router = APIRouter()
 
 
 @router.post("/", response_model=VisualAnalystOutput)
-def analyze_image(payload: VisualAnalystInput):
-    try:
-        return service.run(payload)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+def analyze_visual(data: VisualAnalystInput):
+    return run(data)
