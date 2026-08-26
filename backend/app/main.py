@@ -116,3 +116,6 @@ app.include_router(creative_director_router, prefix="/agents/direction", tags=["
 
 from app.modules.board_generator.router import router as board_generator_router
 app.include_router(board_generator_router, prefix="/agents/board", tags=["agents"])
+
+from app.modules.project.router import router as project_router
+app.include_router(project_router, prefix="/projects", tags=["projects"])
