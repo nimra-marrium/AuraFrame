@@ -119,3 +119,6 @@ app.include_router(board_generator_router, prefix="/agents/board", tags=["agents
 
 from app.modules.project.router import router as project_router
 app.include_router(project_router, prefix="/projects", tags=["projects"])
+
+from app.modules.image.router import router as image_router
+app.include_router(image_router, prefix="/images", tags=["images"])
