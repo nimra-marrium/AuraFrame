@@ -1,31 +1,14 @@
 # AuraFrame
-
-An AI-powered creative workspace that turns scattered visual inspiration
-and a plain-language brief into a structured creative direction and an
-editable mood board.
+An AI-powered creative workspace that turns scattered visual inspiration and a plain-language brief into a structured creative direction and an editable mood board.
 
 ## Structure
-
 ```
-frontend/   Next.js app (the UI) - not yet built
-backend/    FastAPI app (the API + AI orchestration) - COMPLETE
+frontend/   Next.js app (the UI)
+backend/    FastAPI app (the API + AI orchestration)
 ```
-
-## Status
-
-✅ **Backend: 100% complete** - all 11 modules built and verified working
-end-to-end, including real Supabase Row Level Security, Gemini-powered
-multimodal AI agents, and file storage.
-
-⬜ **Frontend: not started** - next phase.
-
-⬜ **Deployment: not started** - happens after frontend is complete.
 
 ## Backend module map
-
-See `backend-modules-reference.md` for full detail on every module -
-responsibilities, preconditions/postconditions, file locations, and
-security patterns. Quick summary:
+See `backend-modules-reference.md` for full detail on every module - responsibilities, preconditions/postconditions, file locations, and security patterns. Quick summary:
 
 | # | Module | What it does |
 |---|--------|---------------|
@@ -42,41 +25,38 @@ security patterns. Quick summary:
 | 11 | Feedback | 👍/👎 on any AI output |
 
 ## Tech stack
+**Backend:** Python, FastAPI, Supabase (Postgres + Auth + Storage), Google Gemini (`gemini-3.5-flash-lite`, multimodal).
 
-**Backend:** Python, FastAPI, Supabase (Postgres + Auth + Storage),
-Google Gemini (`gemini-2.5-flash`, multimodal).
+**Frontend:** Next.js, React, TypeScript, Tailwind CSS.
 
-**Frontend (planned):** Next.js, React, TypeScript, Tailwind CSS.
-
-**Architecture:** every backend module is self-contained -
-`schemas.py` (data contract) + `service.py` (logic) + `router.py`
-(HTTP layer) - so any one module can be built, tested, and understood
-in isolation, without the others running.
+**Architecture:** every backend module is self-contained - `schemas.py` (data contract) + `service.py` (logic) + `router.py` (HTTP layer) - so any one module can be built, tested, and understood in isolation, without the others running.
 
 ## Getting started
-
-See `frontend/README.md` and `backend/README.md` for setup instructions
-for each half of the project.
+See `frontend/README.md` and `backend/README.md` for setup instructions for each half of the project.
 
 **Backend quick start:**
-```
+macOS / Linux:
+```bash
 cd backend
-python -m venv venv
-venv\Scripts\Activate.ps1      # Windows
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env           # then fill in real Supabase + Gemini keys
 uvicorn app.main:app --reload
 ```
+
+Windows (PowerShell):
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env         # then fill in real Supabase + Gemini keys
+uvicorn app.main:app --reload
+```
+
 Visit `http://localhost:8000/docs` for interactive API docs.
 
-**Testing note:** the Swagger `/docs` UI has proven unreliable with the
-`authorization` header field specifically. For endpoints requiring a
-Bearer token, use the Python test scripts in `backend/`
-(`test_create_project.py`, `test_full_pipeline.py`) instead - these use
-the `requests` library and work reliably.
+**Note on `python` vs `python3`:** macOS/Linux usually need `python3` and `pip3` explicitly, since plain `python` may point to Python 2 or not exist at all. Windows usually just uses `python`/`pip`. If a command isn't found, try the other variant.
 
-## Build order (for reference / if extending)
-
-Auth → Project → Brief Analyst Agent → Image Upload → Visual Analyst →
-Collective Analyst → Creative Director → Board Generator → Board
-storage → Export → Feedback → **[current point]** → Frontend → Deployment
+**Testing note:** the Swagger `/docs` UI has proven unreliable with the `authorization` header field specifically, regardless of OS. For endpoints requiring a Bearer token, use the Python test scripts in `backend/` (`test_create_project.py`, `test_full_pipeline.py`) instead - these use the `requests` library and work reliably everywhere.
