@@ -1,19 +1,13 @@
 """
 Board Generator Agent - core logic.
-
-Responsibility: propose an initial visual layout for the mood board canvas.
-
-PRECONDITION:  direction JSON is valid, image list non-empty
-POSTCONDITION: none required - pure function, no DB writes here
-
-Testable standalone: fake direction JSON + a hardcoded list of 3 fake
-image IDs/urls. No real board/project needed to test this.
 """
 import json
 from google import genai
 from app.core.config import settings
+from app.core.logging import get_logger
 from .schemas import BoardGeneratorInput, BoardGeneratorOutput
 
+logger = get_logger(__name__)
 _client = None
 
 def _get_client():
@@ -52,25 +46,30 @@ def run(data: BoardGeneratorInput) -> BoardGeneratorOutput:
     if not data.image_ids:
         raise ValueError("at least 1 image id is required")
 
-    client = _get_client()
-    prompt = PROMPT_TEMPLATE.format(
-        direction_json=json.dumps(data.direction.model_dump(), indent=2),
-        image_ids_json=json.dumps(data.image_ids),
-    )
-
-    response = client.models.generate_content(
-        model="gemini-3.5-flash",
-        contents=prompt,
-    )
-
-    raw_text = response.text.strip()
-    if raw_text.startswith("```"):
-        raw_text = raw_text.strip("`")
-        raw_text = raw_text.replace("json", "", 1).strip()
-
     try:
-        parsed = json.loads(raw_text)
-    except json.JSONDecodeError:
-        raise ValueError(f"AI returned non-JSON response: {raw_text[:200]}")
+        client = _get_client()
+        prompt = PROMPT_TEMPLATE.format(
+            direction_json=json.dumps(data.direction.model_dump(), indent=2),
+            image_ids_json=json.dumps(data.image_ids),
+        )
 
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite",
+            contents=prompt,
+        )
+
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`")
+            raw_text = raw_text.replace("json", "", 1).strip()
+
+        parsed = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        logger.error(f"Board Generator returned non-JSON: {e}")
+        raise ValueError("AI returned non-JSON response")
+    except Exception as e:
+        logger.error(f"Board Generator call failed: {e}")
+        raise ValueError(f"board generation failed: {e}")
+
+    logger.info(f"Board layout generated with {len(parsed.get('elements', []))} elements")
     return BoardGeneratorOutput(**parsed)

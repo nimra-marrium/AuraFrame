@@ -1,20 +1,13 @@
 """
 Creative Director Agent - core logic.
-
-Responsibility: combine brief analysis + visual patterns into one
-creative direction.
-
-PRECONDITION:  both inputs non-null, matching expected shape
-POSTCONDITION: none required - pure function, no DB writes here
-
-Testable standalone: hand-write fake BriefAnalystOutput and
-CollectiveAnalystOutput-shaped dicts and feed them in directly.
 """
 import json
 from google import genai
 from app.core.config import settings
+from app.core.logging import get_logger
 from .schemas import CreativeDirectorInput, CreativeDirectorOutput
 
+logger = get_logger(__name__)
 _client = None
 
 def _get_client():
@@ -48,25 +41,30 @@ Visual pattern analysis:
 
 
 def run(data: CreativeDirectorInput) -> CreativeDirectorOutput:
-    client = _get_client()
-    prompt = PROMPT_TEMPLATE.format(
-        brief_json=json.dumps(data.brief_analysis.model_dump(), indent=2),
-        collective_json=json.dumps(data.collective_analysis.model_dump(), indent=2),
-    )
-
-    response = client.models.generate_content(
-        model="gemini-3.5-flash",
-        contents=prompt,
-    )
-
-    raw_text = response.text.strip()
-    if raw_text.startswith("```"):
-        raw_text = raw_text.strip("`")
-        raw_text = raw_text.replace("json", "", 1).strip()
-
     try:
-        parsed = json.loads(raw_text)
-    except json.JSONDecodeError:
-        raise ValueError(f"AI returned non-JSON response: {raw_text[:200]}")
+        client = _get_client()
+        prompt = PROMPT_TEMPLATE.format(
+            brief_json=json.dumps(data.brief_analysis.model_dump(), indent=2),
+            collective_json=json.dumps(data.collective_analysis.model_dump(), indent=2),
+        )
 
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite",
+            contents=prompt,
+        )
+
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`")
+            raw_text = raw_text.replace("json", "", 1).strip()
+
+        parsed = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        logger.error(f"Creative Director returned non-JSON: {e}")
+        raise ValueError("AI returned non-JSON response")
+    except Exception as e:
+        logger.error(f"Creative Director call failed: {e}")
+        raise ValueError(f"creative direction failed: {e}")
+
+    logger.info(f"Creative direction generated: {parsed.get('direction_name')}")
     return CreativeDirectorOutput(**parsed)

@@ -1,19 +1,13 @@
 """
 Brief Analyst Agent - core logic.
-
-Responsibility: turn raw brief text into structured creative tags.
-
-PRECONDITION:  brief_text is non-empty
-POSTCONDITION: none required - pure function, no DB writes here
-
-Testable standalone: call run() with any hardcoded string, no other
-module, database, or HTTP layer needs to exist.
 """
 import json
 from google import genai
 from app.core.config import settings
+from app.core.logging import get_logger
 from .schemas import BriefAnalystInput, BriefAnalystOutput
 
+logger = get_logger(__name__)
 _client = None
 
 def _get_client():
@@ -46,23 +40,27 @@ def run(data: BriefAnalystInput) -> BriefAnalystOutput:
     if not data.brief_text.strip():
         raise ValueError("brief_text cannot be empty")
 
-    client = _get_client()
-    prompt = PROMPT_TEMPLATE.format(brief_text=data.brief_text)
-
-    response = client.models.generate_content(
-        model="gemini-3.5-flash-lite",
-        contents=prompt,
-    )
-
-    raw_text = response.text.strip()
-    # Gemini sometimes wraps JSON in ```json fences despite instructions - strip if present
-    if raw_text.startswith("```"):
-        raw_text = raw_text.strip("`")
-        raw_text = raw_text.replace("json", "", 1).strip()
-
     try:
-        parsed = json.loads(raw_text)
-    except json.JSONDecodeError:
-        raise ValueError(f"AI returned non-JSON response: {raw_text[:200]}")
+        client = _get_client()
+        prompt = PROMPT_TEMPLATE.format(brief_text=data.brief_text)
 
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite",
+            contents=prompt,
+        )
+
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`")
+            raw_text = raw_text.replace("json", "", 1).strip()
+
+        parsed = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        logger.error(f"Brief Analyst returned non-JSON: {e}")
+        raise ValueError(f"AI returned non-JSON response")
+    except Exception as e:
+        logger.error(f"Brief Analyst call failed: {e}")
+        raise ValueError(f"brief analysis failed: {e}")
+
+    logger.info("Brief analyzed successfully")
     return BriefAnalystOutput(**parsed)

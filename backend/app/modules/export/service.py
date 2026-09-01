@@ -1,37 +1,34 @@
 """
 Export module - core logic.
-
-Responsibility: turn a saved board into a downloadable file.
-
-PRECONDITION:  board/layout exists and is well-formed
-POSTCONDITION: file generated and returned
-
-Testable standalone: feed it a hand-written fake layout JSON. Doesn't
-need a real project or real board saved.
-
-NOTE: this MVP version exports a clean JSON summary (direction + palette
-+ layout) rather than a rendered image/PDF - real image rendering would
-need an extra library (e.g. Pillow) and is a good "v2" upgrade later.
 """
-import json
 from app.core.database import get_supabase
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def export_project(project_id: str) -> dict:
     supabase = get_supabase()
 
-    project_result = supabase.table("projects").select("*").eq("id", project_id).execute()
-    if not project_result.data:
-        raise ValueError(f"project {project_id} not found")
-    project = project_result.data[0]
+    try:
+        project_result = supabase.table("projects").select("*").eq("id", project_id).execute()
+        if not project_result.data:
+            raise ValueError(f"project {project_id} not found")
+        project = project_result.data[0]
 
-    board_result = supabase.table("boards").select("*").eq("project_id", project_id).execute()
-    board = board_result.data[0] if board_result.data else None
+        board_result = supabase.table("boards").select("*").eq("project_id", project_id).execute()
+        board = board_result.data[0] if board_result.data else None
 
-    images_result = supabase.table("images").select("*").eq("project_id", project_id).execute()
-    images = images_result.data
+        images_result = supabase.table("images").select("*").eq("project_id", project_id).execute()
+        images = images_result.data
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(f"Export failed for project {project_id}: {e}")
+        raise ValueError(f"failed to export project: {e}")
 
-    export_data = {
+    logger.info(f"Project exported: {project_id}")
+    return {
         "project": {
             "name": project["name"],
             "brief_text": project["brief_text"],
@@ -42,5 +39,3 @@ def export_project(project_id: str) -> dict:
         "board_layout": board["layout_data"] if board else [],
         "exported_at": None,
     }
-
-    return export_data

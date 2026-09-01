@@ -1,19 +1,13 @@
 """
 Collective Analyst Agent - core logic.
-
-Responsibility: find patterns ACROSS multiple images' analyses.
-
-PRECONDITION:  array has at least 2 entries
-POSTCONDITION: none required - pure function, no DB writes here
-
-Testable standalone: hand-write 3-4 fake VisualAnalystOutput-shaped dicts
-and feed them in directly - no real images or upload flow needed.
 """
 import json
 from google import genai
 from app.core.config import settings
+from app.core.logging import get_logger
 from .schemas import CollectiveAnalystInput, CollectiveAnalystOutput
 
+logger = get_logger(__name__)
 _client = None
 
 def _get_client():
@@ -47,23 +41,28 @@ def run(data: CollectiveAnalystInput) -> CollectiveAnalystOutput:
     if len(data.analyses) < 2:
         raise ValueError("at least 2 image analyses are required")
 
-    client = _get_client()
-    analyses_json = json.dumps([a.model_dump() for a in data.analyses], indent=2)
-    prompt = PROMPT_TEMPLATE.format(analyses_json=analyses_json)
-
-    response = client.models.generate_content(
-        model="gemini-3.5-flash",
-        contents=prompt,
-    )
-
-    raw_text = response.text.strip()
-    if raw_text.startswith("```"):
-        raw_text = raw_text.strip("`")
-        raw_text = raw_text.replace("json", "", 1).strip()
-
     try:
-        parsed = json.loads(raw_text)
-    except json.JSONDecodeError:
-        raise ValueError(f"AI returned non-JSON response: {raw_text[:200]}")
+        client = _get_client()
+        analyses_json = json.dumps([a.model_dump() for a in data.analyses], indent=2)
+        prompt = PROMPT_TEMPLATE.format(analyses_json=analyses_json)
 
+        response = client.models.generate_content(
+            model="gemini-3.5-flash-lite",
+            contents=prompt,
+        )
+
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`")
+            raw_text = raw_text.replace("json", "", 1).strip()
+
+        parsed = json.loads(raw_text)
+    except json.JSONDecodeError as e:
+        logger.error(f"Collective Analyst returned non-JSON: {e}")
+        raise ValueError("AI returned non-JSON response")
+    except Exception as e:
+        logger.error(f"Collective Analyst call failed: {e}")
+        raise ValueError(f"collective analysis failed: {e}")
+
+    logger.info(f"Collective analysis completed for {len(data.analyses)} images")
     return CollectiveAnalystOutput(**parsed)
