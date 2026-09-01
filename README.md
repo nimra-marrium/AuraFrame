@@ -1,7 +1,7 @@
 # AuraFrame
 An AI-powered creative workspace that turns scattered visual inspiration and a plain-language brief into a structured creative direction and an editable mood board.
 
-## Structure
+## Structure of AuraFrame
 ```
 frontend/   Next.js app (the UI)
 backend/    FastAPI app (the API + AI orchestration)
