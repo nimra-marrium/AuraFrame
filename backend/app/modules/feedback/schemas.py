@@ -1,18 +1,25 @@
 """
-Feedback/Eval - data contracts.
+Feedback module - data contracts.
 
-INPUT:  project_id, output_type, rating, optional comment
+INPUT:  project_id, output_type, rating (up/down), optional comment
 OUTPUT: saved Feedback record
 """
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
+from datetime import datetime
 
 
-class FeedbackEvalInput(BaseModel):
-    # TODO: replace with real fields matching: project_id, output_type, rating, optional comment
-    placeholder: Optional[str] = None
+class FeedbackInput(BaseModel):
+    project_id: str
+    output_type: str   # "palette" | "direction" | "board" etc
+    rating: str         # "up" | "down"
+    comment: Optional[str] = None
 
 
-class FeedbackEvalOutput(BaseModel):
-    # TODO: replace with real fields matching: saved Feedback record
-    placeholder: Optional[str] = None
+class FeedbackOutput(BaseModel):
+    id: str
+    project_id: str
+    output_type: str
+    rating: str
+    comment: Optional[str] = None
+    created_at: datetime

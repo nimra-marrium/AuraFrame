@@ -122,3 +122,12 @@ app.include_router(project_router, prefix="/projects", tags=["projects"])
 
 from app.modules.image.router import router as image_router
 app.include_router(image_router, prefix="/images", tags=["images"])
+
+from app.modules.boards.router import router as boards_router
+app.include_router(boards_router, prefix="/boards", tags=["boards"])
+
+from app.modules.feedback.router import router as feedback_router
+app.include_router(feedback_router, prefix="/feedback", tags=["feedback"])
+
+from app.modules.export.router import router as export_router
+app.include_router(export_router, prefix="/export", tags=["export"])
