@@ -1,62 +1,114 @@
+<div align="center">
+
 # AuraFrame
-An AI-powered creative workspace that turns scattered visual inspiration and a plain-language brief into a structured creative direction and an editable mood board.
 
-## Structure
+**An AI-powered creative workspace that transforms unstructured visual inspiration into structured creative direction and editable mood boards.**
+
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=flat&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Google Gemini](https://img.shields.io/badge/Gemini-3.5--flash--lite-4285F4?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+</div>
+
+---
+
+## Overview
+
+Creative professionals start projects with scattered inspiration — Pinterest boards, screenshots, half-written notes, competitor references. AuraFrame turns that fragmented input into a structured creative system: a written brief goes in, a computer-vision + multimodal-LLM pipeline analyzes it alongside any reference images, and the output is a complete creative direction — palette, typography, imagery guidance — rendered onto an editable mood board.
+
+This is not a chatbot wrapper. It's a multi-agent orchestration pipeline with independently testable stages, backed by a relational database with row-level security, and a real file-storage layer.
+
+## Architecture
+
 ```
-frontend/   Next.js app (the UI)
-backend/    FastAPI app (the API + AI orchestration)
+User Brief ──┐
+             ├──▶ Brief Analyst Agent ───┐
+Reference    │                          │
+Images ──────┼──▶ Visual Analyst Agent ─┼──▶ Collective Analyst Agent
+             │    (per image)           │    (cross-image patterns)
+             │                          │
+             └──────────────────────────┼──▶ Creative Director Agent
+                                         │    (direction + palette + type)
+                                         │
+                                         └──▶ Board Generator Agent
+                                              (canvas layout JSON)
+                                                    │
+                                                    ▼
+                                          User-editable Mood Board
+                                                    │
+                                          Feedback Loop (👍/👎 per output)
 ```
 
-## Backend module map
-See `backend-modules-reference.md` for full detail on every module - responsibilities, preconditions/postconditions, file locations, and security patterns. Quick summary:
-
-| # | Module | What it does |
-|---|--------|---------------|
-| 1 | Auth | Signup/login via Supabase Auth |
-| 2 | Project | Create/read a project + brief |
-| 3 | Image Upload | Store reference images |
-| 4 | Brief Analyst Agent | Brief text → structured tags (Gemini) |
-| 5 | Visual Analyst Agent | One image → visual analysis (Gemini vision) |
-| 6 | Collective Analyst Agent | Multiple analyses → shared patterns |
-| 7 | Creative Director Agent | Brief + patterns → creative direction |
-| 8 | Board Generator Agent | Direction → initial canvas layout |
-| 9 | Board storage | Save/load user-edited board layout |
-| 10 | Export | Bundle project into downloadable JSON |
-| 11 | Feedback | 👍/👎 on any AI output |
+Five independent AI agents, each a pure function — JSON in, JSON out — chained through a controlled pipeline rather than a single opaque prompt. Every agent is testable in isolation with hand-written mock input, with no dependency on the database or any other agent running.
 
 ## Tech stack
-**Backend:** Python, FastAPI, Supabase (Postgres + Auth + Storage), Google Gemini (`gemini-3.5-flash-lite`, multimodal).
 
-**Frontend:** Next.js, React, TypeScript, Tailwind CSS.
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI |
+| Database | PostgreSQL (Supabase), Row Level Security |
+| Auth | Supabase Auth (JWT-based) |
+| File storage | Supabase Storage |
+| AI / LLM | Google Gemini 3.5 Flash Lite (multimodal — text + vision) |
+| Frontend | Next.js, React, TypeScript, Tailwind CSS *(in progress)* |
 
-**Architecture:** every backend module is self-contained - `schemas.py` (data contract) + `service.py` (logic) + `router.py` (HTTP layer) - so any one module can be built, tested, and understood in isolation, without the others running.
+## Backend module map
+
+| Module | Responsibility |
+|---|---|
+| Auth | Signup / login via Supabase Auth, JWT session handling |
+| Project | Create/read a project and its creative brief |
+| Image Upload | Multipart file upload → Supabase Storage + DB pointer |
+| Brief Analyst Agent | Brief text → structured objective/audience/tone/keywords |
+| Visual Analyst Agent | Single image → colors, style, objects, composition, lighting |
+| Collective Analyst Agent | N images → recurring patterns, outliers, overall mood |
+| Creative Director Agent | Brief + visual patterns → palette, typography, direction |
+| Board Generator Agent | Direction → canvas layout (x/y/w/h element positions) |
+| Board Storage | Persist/update user-edited board layout |
+| Export | Bundle project into a downloadable file |
+| Feedback | Capture 👍/👎 per AI output for evaluation |
+
+Full detail — preconditions, postconditions, security patterns — in [`backend-modules-reference.md`](./backend-modules-reference.md).
+
+## Security model
+
+Every user-owned resource is protected by PostgreSQL Row Level Security, not just application-level checks. Requests carry the caller's Supabase JWT; policies verify ownership at the database layer — including relationship-based checks (e.g. a board's ownership is verified through its parent project's `user_id`, since `boards` has no direct `user_id` column of its own).
+
+```sql
+create policy "Users can insert boards for their own projects"
+on boards for insert
+with check (
+  exists (
+    select 1 from projects
+    where projects.id = boards.project_id
+    and projects.user_id = auth.uid()
+  )
+);
+```
+
+## Status
+
+- ✅ Backend — 11/11 modules complete, tested end-to-end
+- ⬜ Frontend — in progress
+- ⬜ Deployment
 
 ## Getting started
-See `frontend/README.md` and `backend/README.md` for setup instructions for each half of the project.
 
-**Backend quick start:**
-macOS / Linux:
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env           # then fill in real Supabase + Gemini keys
-uvicorn app.main:app --reload
-```
+See [`backend/README.md`](./backend/README.md) for backend setup (macOS/Linux + Windows instructions included).
 
-Windows (PowerShell):
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-copy .env.example .env         # then fill in real Supabase + Gemini keys
-uvicorn app.main:app --reload
-```
+## Roadmap
 
-Visit `http://localhost:8000/docs` for interactive API docs.
+- [ ] Frontend: creative brief intake, image upload UI, AI analysis panels
+- [ ] Interactive mood board canvas
+- [ ] Image embeddings for visual similarity search (pgvector)
+- [ ] Background job queue for AI agent calls (async, non-blocking)
+- [ ] Deployment (Vercel + Render)
 
-**Note on `python` vs `python3`:** macOS/Linux usually need `python3` and `pip3` explicitly, since plain `python` may point to Python 2 or not exist at all. Windows usually just uses `python`/`pip`. If a command isn't found, try the other variant.
+---
 
-**Testing note:** the Swagger `/docs` UI has proven unreliable with the `authorization` header field specifically, regardless of OS. For endpoints requiring a Bearer token, use the Python test scripts in `backend/` (`test_create_project.py`, `test_full_pipeline.py`) instead - these use the `requests` library and work reliably everywhere.
+<div align="center">
+<sub>Built as a portfolio project demonstrating full-stack AI product engineering: multi-agent orchestration, multimodal AI integration, relational database security, and product-oriented system design.</sub>
+</div>
