@@ -38,16 +38,18 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-stone-50 px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-2xl font-semibold text-stone-900">AuraFrame</h1>
-        <p className="mb-8 text-sm text-stone-500">
+    <main className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
+      <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-10 shadow-sm">
+        <h1 className="mb-1 text-center font-serif text-3xl font-medium tracking-tight text-neutral-900">
+          AuraFrame
+        </h1>
+        <p className="mb-8 text-center text-sm text-neutral-500">
           {mode === "login" ? "Log in to your account" : "Create a new account"}
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-stone-700">
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-neutral-700">
               Email
             </label>
             <input
@@ -56,13 +58,13 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500"
+              className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-stone-700">
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-neutral-700">
               Password
             </label>
             <input
@@ -72,34 +74,40 @@ export default function LoginPage() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-stone-300 px-3 py-2 text-sm focus:border-stone-500 focus:outline-none focus:ring-1 focus:ring-stone-500"
+              className="w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm text-neutral-900 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900"
               placeholder="At least 8 characters"
             />
           </div>
 
           {error && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+            <p className="rounded-lg bg-neutral-100 px-3.5 py-2.5 text-sm text-neutral-800">
+              {error}
+            </p>
           )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-stone-800 disabled:opacity-50"
+            className="w-full rounded-lg bg-neutral-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
           >
             {submitting ? "Please wait..." : mode === "login" ? "Log in" : "Sign up"}
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-neutral-200" />
+          <span className="text-xs uppercase tracking-wide text-neutral-400">or</span>
+          <div className="h-px flex-1 bg-neutral-200" />
+        </div>
 
         <button
           onClick={() => {
             setMode(mode === "login" ? "signup" : "login");
             setError(null);
           }}
-          className="mt-4 w-full text-center text-sm text-stone-500 hover:text-stone-700"
+          className="w-full rounded-lg border border-neutral-300 px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
         >
-          {mode === "login"
-            ? "Don't have an account? Sign up"
-            : "Already have an account? Log in"}
+          {mode === "login" ? "Create a new account" : "Log in instead"}
         </button>
       </div>
     </main>

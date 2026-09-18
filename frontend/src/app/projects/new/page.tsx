@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError } from "@/lib/api";
+import Navbar from "@/components/Navbar";
 
 interface Project {
   id: string;
@@ -52,11 +52,7 @@ export default function NewProjectPage() {
 
   return (
     <main className="min-h-screen bg-stone-50">
-      <header className="border-b border-stone-200 px-8 py-4">
-        <Link href="/dashboard" className="text-sm text-stone-500 hover:text-stone-800">
-          ← Back to dashboard
-        </Link>
-      </header>
+      <Navbar showNewProject={false} />
 
       <div className="mx-auto max-w-2xl px-8 py-10">
         <h1 className="mb-1 text-xl font-semibold text-stone-900">New project</h1>

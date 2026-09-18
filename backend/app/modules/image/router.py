@@ -32,3 +32,11 @@ async def upload_image(
 @router.get("/project/{project_id}", response_model=list[ImageOutput])
 def list_images(project_id: str):
     return service.list_for_project(project_id)
+
+
+@router.delete("/{image_id}", status_code=204)
+def delete_image(image_id: str):
+    try:
+        service.delete(image_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

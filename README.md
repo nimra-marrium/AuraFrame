@@ -106,6 +106,7 @@ See [`backend/README.md`](./backend/README.md) for backend setup (macOS/Linux + 
 - [ ] Image embeddings for visual similarity search (pgvector)
 - [ ] Background job queue for AI agent calls (async, non-blocking)
 - [ ] Deployment (Vercel + Render)
+- [ ] Social login (Google/GitHub) — deferred, requires provider account verification
 
 ---
 

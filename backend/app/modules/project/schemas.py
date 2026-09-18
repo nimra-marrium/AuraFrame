@@ -18,6 +18,14 @@ class ProjectCreateInput(BaseModel):
     desired_mood: Optional[str] = None
 
 
+class ProjectUpdateInput(BaseModel):
+    name: str
+    brief_text: str
+    project_type: Optional[str] = None
+    target_audience: Optional[str] = None
+    desired_mood: Optional[str] = None
+
+
 class ProjectOutput(BaseModel):
     id: str
     user_id: str

@@ -49,6 +49,11 @@ async function request<T>(
     throw new ApiError(detail, response.status);
   }
 
+  // DELETE endpoints commonly return 204 with no response body.
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   const contentType = response.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
     return response.json();
@@ -65,7 +70,12 @@ export const api = {
 
   put: <T,>(path: string, body: unknown, token?: string | null) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(body) }, token),
+
 };
+
+export function deleteImage(path: string, token?: string | null) {
+  return request<void>(path, { method: "DELETE" }, token);
+}
 
 /** Separate helper for file uploads, since those need multipart/form-data,
  *  not JSON - mirrors the backend's image module being the one exception

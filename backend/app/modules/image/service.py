@@ -2,6 +2,7 @@
 Image Upload module - core logic.
 """
 import uuid
+from urllib.parse import unquote, urlparse
 from app.core.database import get_supabase
 from app.core.logging import get_logger
 from .schemas import ImageOutput
@@ -55,3 +56,37 @@ def list_for_project(project_id: str) -> list[ImageOutput]:
         raise ValueError(f"failed to list images: {e}")
 
     return [ImageOutput(**row) for row in result.data]
+
+
+def delete(image_id: str) -> None:
+    """Delete an image record and its corresponding file from Storage."""
+    supabase = get_supabase()
+
+    try:
+        result = supabase.table("images").select("id,url").eq("id", image_id).execute()
+    except Exception as e:
+        logger.error(f"Image lookup failed for {image_id}: {e}")
+        raise ValueError("failed to find image")
+
+    if not result.data:
+        raise ValueError("image not found")
+
+    image_url = result.data[0]["url"]
+    storage_marker = f"/storage/v1/object/public/{BUCKET_NAME}/"
+    storage_path = unquote(urlparse(image_url).path.split(storage_marker, 1)[-1])
+
+    try:
+        supabase.table("images").delete().eq("id", image_id).execute()
+    except Exception as e:
+        logger.error(f"Image record deletion failed for {image_id}: {e}")
+        raise ValueError("failed to delete image")
+
+    if storage_marker in urlparse(image_url).path:
+        try:
+            supabase.storage.from_(BUCKET_NAME).remove([storage_path])
+        except Exception as e:
+            # The database record is what controls what the user sees. Storage
+            # cleanup should not make a successful image removal look like it failed.
+            logger.warning(f"Storage cleanup failed for deleted image {image_id}: {e}")
+
+    logger.info(f"Image deleted: {image_id}")

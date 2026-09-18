@@ -1,0 +1,48 @@
+
+> auraframe-frontend@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.5
+  - Local:        http://localhost:3000
+
+ ✓ Starting...
+ ✓ Ready in 2.3s
+ ○ Compiling / ...
+ ✓ Compiled / in 8.7s (492 modules)
+ GET / 200 in 9252ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1511ms (520 modules)
+ GET /dashboard 200 in 1934ms
+ ○ Compiling /projects/[id] ...
+ ✓ Compiled /projects/[id] in 565ms (512 modules)
+ ✓ Compiled in 552ms (526 modules)
+ ✓ Compiled /_not-found in 445ms (515 modules)
+ GET /projects/dbc6ada2-6c5c-44e1-b87a-7b5385c064b8 404 in 516ms
+ GET /projects/dbc6ada2-6c5c-44e1-b87a-7b5385c064b8 200 in 231ms
+ ✓ Compiled in 684ms (526 modules)
+ ✓ Compiled in 879ms (526 modules)
+ ✓ Compiled in 694ms (526 modules)
+ ○ Compiling /projects/new ...
+ ✓ Compiled /projects/new in 647ms (518 modules)
+ ✓ Compiled in 557ms (532 modules)
+ GET /dashboard 200 in 197ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 656ms (538 modules)
+ ✓ Compiled in 1121ms (534 modules)
+ ○ Compiling /projects/[id]/board ...
+ ✓ Compiled /projects/[id]/board in 592ms (526 modules)
+ ✓ Compiled in 1000ms (540 modules)
+ ✓ Compiled in 491ms (540 modules)
+ ○ Compiling /about ...
+ ✓ Compiled /about in 839ms (546 modules)
+ ○ Compiling /feedback ...
+ ✓ Compiled /feedback in 668ms (538 modules)
+ ✓ Compiled in 520ms (552 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3s (776 modules)
+ GET /projects/dbc6ada2-6c5c-44e1-b87a-7b5385c064b8?edit=1 200 in 179ms
+ GET /dashboard 200 in 65ms
+ ✓ Compiled /login in 381ms (306 modules)
+ ✓ Compiled in 925ms (770 modules)
+ ✓ Compiled /feedback in 412ms (310 modules)
+ ✓ Compiled in 1110ms (770 modules)

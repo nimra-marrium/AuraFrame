@@ -4,7 +4,7 @@ Project module - HTTP interface. Thin: only translates HTTP <-> service.py.
 
 from fastapi import APIRouter, HTTPException, Header
 
-from .schemas import ProjectCreateInput, ProjectOutput
+from .schemas import ProjectCreateInput, ProjectUpdateInput, ProjectOutput
 from . import service
 from app.core.database import get_supabase
 
@@ -42,6 +42,28 @@ def get_project(project_id: str):
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.put("/{project_id}", response_model=ProjectOutput)
+def update_project(
+    project_id: str,
+    payload: ProjectUpdateInput,
+    authorization: str = Header(...),
+):
+    try:
+        if not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=401,
+                detail="Authorization header must use Bearer token",
+            )
+
+        access_token = authorization.replace("Bearer ", "", 1)
+        supabase = get_supabase()
+        supabase.postgrest.auth(access_token)
+
+        return service.update(project_id, payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/user/{user_id}", response_model=list[ProjectOutput])

@@ -3,7 +3,7 @@ Project module - core logic.
 """
 from app.core.database import get_supabase
 from app.core.logging import get_logger
-from .schemas import ProjectCreateInput, ProjectOutput
+from .schemas import ProjectCreateInput, ProjectUpdateInput, ProjectOutput
 
 logger = get_logger(__name__)
 
@@ -43,6 +43,27 @@ def get(project_id: str) -> ProjectOutput:
     if not result.data:
         raise ValueError(f"project {project_id} not found")
 
+    return ProjectOutput(**result.data[0])
+
+
+def update(project_id: str, data: ProjectUpdateInput) -> ProjectOutput:
+    supabase = get_supabase()
+    try:
+        result = supabase.table("projects").update({
+            "name": data.name,
+            "brief_text": data.brief_text,
+            "project_type": data.project_type,
+            "target_audience": data.target_audience,
+            "desired_mood": data.desired_mood,
+        }).eq("id", project_id).execute()
+    except Exception as e:
+        logger.error(f"Project update failed for {project_id}: {e}")
+        raise ValueError(f"failed to update project: {e}")
+
+    if not result.data:
+        raise ValueError("project not found")
+
+    logger.info(f"Project updated: {project_id}")
     return ProjectOutput(**result.data[0])
 
 

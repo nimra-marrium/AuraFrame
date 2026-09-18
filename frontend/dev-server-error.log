@@ -1,0 +1,24 @@
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\client-development\1.pack.gz_' -> 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\client-development\1.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\server-development\3.pack.gz_' -> 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\server-development\3.pack.gz'
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\client-development\0.pack.gz_' -> 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\client-development\0.pack.gz'
+ ⨯ TypeError: Cannot read properties of undefined (reading 'entryCSSFiles')
+    at rE (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:3692)
+    at rW (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:12989)
+    at r0 (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:16244)
+    at r6 (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:39:23204)
+    at C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:42:726
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Object.wrap (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:36:16615)
+    at C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:42:616
+    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)
+    at Object.wrap (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:36:15721)
+    at r3 (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:42:543)
+    at nd.render (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\compiled\next-server\app-page.runtime.dev.js:42:4661)
+    at doRender (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\server\base-server.js:1438:44)
+    at cacheEntry.responseCache.get.routeKind (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\server\base-server.js:1587:46)
+    at ResponseCache.get (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\server\response-cache\index.js:49:26)
+    at DevServer.renderToResponseWithComponentsImpl (C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\node_modules\next\dist\server\base-server.js:1507:53) {
+  page: '/projects/dbc6ada2-6c5c-44e1-b87a-7b5385c064b8'
+}
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\client-development\2.pack.gz_' -> 'C:\Users\PMLS\Downloads\AuraFrame\AuraFrame\frontend\.next\cache\webpack\client-development\2.pack.gz'
