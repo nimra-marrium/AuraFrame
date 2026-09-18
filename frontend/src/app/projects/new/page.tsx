@@ -52,7 +52,7 @@ export default function NewProjectPage() {
 
   return (
     <main className="min-h-screen bg-stone-50">
-      <Navbar showNewProject={false} />
+      <Navbar logoutOnly />
 
       <div className="mx-auto max-w-2xl px-8 py-10">
         <h1 className="mb-1 text-xl font-semibold text-stone-900">New project</h1>

@@ -78,3 +78,33 @@ def list_for_user(user_id: str) -> list[ProjectOutput]:
         raise ValueError(f"failed to list projects: {e}")
 
     return [ProjectOutput(**row) for row in result.data]
+
+def delete(project_id: str, user_id: str) -> None:
+    supabase = get_supabase()
+
+    # Make sure the project exists and belongs to this user
+    try:
+        found = (
+            supabase.table("projects")
+            .select("id")
+            .eq("id", project_id)
+            .eq("user_id", user_id)
+            .execute()
+        )
+    except Exception as e:
+        logger.error(f"Project lookup failed for {project_id}: {e}")
+        raise ValueError(f"failed to delete project: {e}")
+
+    if not found.data:
+        raise ValueError("project not found")
+
+    # Remove the project's board and images first, then the project itself
+    try:
+        supabase.table("boards").delete().eq("project_id", project_id).execute()
+        supabase.table("images").delete().eq("project_id", project_id).execute()
+        supabase.table("projects").delete().eq("id", project_id).execute()
+    except Exception as e:
+        logger.error(f"Project delete failed for {project_id}: {e}")
+        raise ValueError(f"failed to delete project: {e}")
+
+    logger.info(f"Project deleted: {project_id}")

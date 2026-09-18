@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { api, uploadFile, deleteImage, ApiError } from "@/lib/api";
 import Navbar from "@/components/Navbar";
@@ -96,13 +95,9 @@ export default function ProjectDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [stage, setStage] = useState<AnalysisStage>("idle");
-  const [briefAnalysis, setBriefAnalysis] = useState<BriefAnalysis | null>(null);
-  const [collectiveAnalysis, setCollectiveAnalysis] = useState<CollectiveAnalysis | null>(null);
-  const [direction, setDirection] = useState<CreativeDirection | null>(null);
-  const [boardElements, setBoardElements] = useState<BoardElement[] | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [hasMoodBoard, setHasMoodBoard] = useState(false);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBrief, setEditBrief] = useState("");
@@ -144,11 +139,6 @@ export default function ProjectDetailPage() {
       .get<ImageRecord[]>(`/images/project/${projectId}`, token)
       .then(setImages)
       .catch(() => setImages([]));
-
-    api
-      .get(`/boards/${projectId}`, token)
-      .then(() => setHasMoodBoard(true))
-      .catch(() => setHasMoodBoard(false));
   }, [projectId, token]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -234,14 +224,10 @@ export default function ProjectDetailPage() {
     router.replace(`/projects/${projectId}`);
   }
 
-  async function runAnalysis() {
+  async function handleGetVisualIdentity() {
     if (!project || !token || images.length < 2) return;
 
     setAnalysisError(null);
-    setBriefAnalysis(null);
-    setCollectiveAnalysis(null);
-    setDirection(null);
-    setBoardElements(null);
     setAnalysisProgress(0);
 
     const totalSteps = images.length + 5;
@@ -258,7 +244,6 @@ export default function ProjectDetailPage() {
         { brief_text: project.brief_text },
         token
       );
-      setBriefAnalysis(brief);
       updateProgress();
 
       setStage("visual");
@@ -279,7 +264,6 @@ export default function ProjectDetailPage() {
         { analyses: visualAnalyses },
         token
       );
-      setCollectiveAnalysis(collective);
       updateProgress();
 
       setStage("direction");
@@ -288,7 +272,6 @@ export default function ProjectDetailPage() {
         { brief_analysis: brief, collective_analysis: collective },
         token
       );
-      setDirection(creativeDirection);
       updateProgress();
 
       setStage("board");
@@ -297,15 +280,25 @@ export default function ProjectDetailPage() {
         { direction: creativeDirection, image_ids: images.map((img) => img.id) },
         token
       );
-      setBoardElements(boardResult.elements);
       updateProgress();
 
       setStage("saving");
       await api.put(`/boards/${projectId}`, { elements: boardResult.elements }, token);
-      setHasMoodBoard(true);
       updateProgress();
 
+      // Stash results for the results page — these aren't persisted server-side
+      sessionStorage.setItem(
+        `auraframe_analysis_${projectId}`,
+        JSON.stringify({
+          briefAnalysis: brief,
+          collectiveAnalysis: collective,
+          direction: creativeDirection,
+          boardElements: boardResult.elements,
+        })
+      );
+
       setStage("done");
+      router.push(`/projects/${projectId}/analysis`);
     } catch (err) {
       setAnalysisError(
         err instanceof ApiError ? err.message : "Analysis failed. Please try again."
@@ -315,14 +308,14 @@ export default function ProjectDetailPage() {
   }
 
   const stageLabels: Record<AnalysisStage, string> = {
-    idle: "",
+    idle: "Get visual identity",
     brief: "Analyzing your brief...",
     visual: "Analyzing reference images...",
     collective: "Finding patterns across images...",
     direction: "Generating creative direction...",
     board: "Composing mood board layout...",
     saving: "Saving board...",
-    done: "",
+    done: "Done",
   };
 
   if (authLoading || loadingProject) {
@@ -342,6 +335,7 @@ export default function ProjectDetailPage() {
   }
 
   const isAnalyzing = stage !== "idle" && stage !== "done";
+  const canRunAnalysis = images.length >= 2 && !isAnalyzing;
 
   return (
     <main className="min-h-screen bg-stone-50">
@@ -438,107 +432,27 @@ export default function ProjectDetailPage() {
           {error && (
             <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
           )}
-        </section>
-
-        <section className="mb-10">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-stone-700">AI creative analysis</h2>
-            <button
-              onClick={runAnalysis}
-              disabled={images.length < 2 || isAnalyzing}
-              className="rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {isAnalyzing ? `${stageLabels[stage]} ${analysisProgress}%` : "Run analysis"}
-            </button>
-          </div>
-
-          {images.length < 2 && (
-            <p className="mt-2 text-xs text-stone-400">
-              Upload at least 2 reference images to run analysis.
-            </p>
-          )}
 
           {analysisError && (
             <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
               {analysisError}
             </p>
           )}
-
-          {briefAnalysis && (
-            <div className="mt-6 rounded-lg border border-stone-200 bg-white p-5">
-              <h3 className="mb-2 text-sm font-semibold text-stone-800">Brief analysis</h3>
-              <p className="text-sm text-stone-600">
-                <span className="font-medium">Objective:</span> {briefAnalysis.objective}
-              </p>
-              <p className="mt-1 text-sm text-stone-600">
-                <span className="font-medium">Audience:</span> {briefAnalysis.audience}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {briefAnalysis.tone.map((t) => (
-                  <span key={t} className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {collectiveAnalysis && (
-            <div className="mt-4 rounded-lg border border-stone-200 bg-white p-5">
-              <h3 className="mb-2 text-sm font-semibold text-stone-800">Visual patterns</h3>
-              <p className="text-sm text-stone-600">{collectiveAnalysis.overall_mood}</p>
-              <div className="mt-3 flex gap-1.5">
-                {collectiveAnalysis.recurring_colors.map((c) => (
-                  <div
-                    key={c}
-                    className="h-8 w-8 rounded-full border border-stone-200"
-                    style={{ backgroundColor: c }}
-                    title={c}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {direction && (
-            <div className="mt-4 rounded-lg border border-stone-200 bg-white p-5">
-              <h3 className="mb-1 text-sm font-semibold text-stone-800">
-                {direction.direction_name}
-              </h3>
-              <p className="mt-2 text-sm text-stone-600">{direction.imagery_direction}</p>
-              <div className="mt-3 flex gap-1.5">
-                {direction.palette.map((c) => (
-                  <div
-                    key={c}
-                    className="h-10 w-10 rounded-md border border-stone-200"
-                    style={{ backgroundColor: c }}
-                    title={c}
-                  />
-                ))}
-              </div>
-              {direction.typography && (
-                <p className="mt-3 text-xs text-stone-500">
-                  Heading: {direction.typography.heading} · Body: {direction.typography.body}
-                </p>
-              )}
-            </div>
-          )}
-
-          {(boardElements || hasMoodBoard) && (
-            <div className="mt-4 rounded-lg border border-stone-200 bg-white p-5">
-              <h3 className="mb-2 text-sm font-semibold text-stone-800">
-                Mood board{boardElements ? ` (${boardElements.length} elements)` : ""} saved
-              </h3>
-              <p className="mb-4 text-xs text-stone-500">Your board is ready to view and export.</p>
-              <Link
-                href={`/projects/${projectId}/board`}
-                className="inline-flex rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800"
-              >
-                Open mood board
-              </Link>
-            </div>
-          )}
         </section>
+
+      {/* Fixed bottom-left action button */}
+      <div className="mb-10">
+          <button
+            onClick={handleGetVisualIdentity}
+            disabled={!canRunAnalysis}
+            className="inline-flex rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isAnalyzing ? `${stageLabels[stage]} ${analysisProgress}%` : "Get visual identity"}
+          </button>
+          {images.length < 2 && (
+            <p className="mt-2 text-xs text-stone-400">Add at least 2 images to start.</p>
+          )}
+        </div>
       </div>
     </main>
   );

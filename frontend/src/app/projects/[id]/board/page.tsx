@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { api, ApiError } from "@/lib/api";
 import Navbar from "@/components/Navbar";
+import { toPng } from "html-to-image";
 
 interface BoardElement {
   type: string;
@@ -29,9 +30,6 @@ interface ImageRecord {
   url: string;
 }
 
-const CANVAS_WIDTH = 1200;
-const CANVAS_HEIGHT = 800;
-
 export default function BoardPage() {
   const params = useParams();
   const router = useRouter();
@@ -45,6 +43,8 @@ export default function BoardPage() {
 
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+
+  const boardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -74,26 +74,36 @@ export default function BoardPage() {
     return images.find((img) => img.id === ref)?.url;
   }
 
+  const imageEls = (board?.layout_data.filter((el) => el.type === "image") ?? []).filter(
+    (el) => imageUrlFor(el.ref)
+  );
+  const swatchEls = board?.layout_data.filter((el) => el.type === "swatch") ?? [];
+  const textEls = board?.layout_data.filter((el) => el.type === "text") ?? [];
+
+  // Total tiles: title tiles + images + one tile holding all swatches
+  const tileCount = textEls.length + imageEls.length + (swatchEls.length > 0 ? 1 : 0);
+  const cols = tileCount <= 2 ? 2 : tileCount <= 6 ? 3 : tileCount <= 12 ? 4 : 5;
+  const rows = Math.max(1, Math.ceil(tileCount / cols));
+
   async function handleExport() {
-    if (!token) return;
+    if (!boardRef.current) return;
     setExporting(true);
     setExportError(null);
 
     try {
-      const data = await api.get<Record<string, unknown>>(`/export/${projectId}`, token);
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
+      const dataUrl = await toPng(boardRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+        backgroundColor: "#ffffff",
       });
-      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.download = `auraframe-export-${projectId}.json`;
+      link.href = dataUrl;
+      link.download = `moodboard-${projectId}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setExportError(err instanceof ApiError ? err.message : "Export failed. Please try again.");
+    } catch {
+      setExportError("Export failed. Please try again.");
     } finally {
       setExporting(false);
     }
@@ -109,10 +119,22 @@ export default function BoardPage() {
 
   return (
     <main className="min-h-screen bg-stone-50">
-      <Navbar onExport={board ? handleExport : undefined} exportDisabled={exporting} />
+      <Navbar />
 
-      <div className="mx-auto max-w-5xl px-8 py-10">
-        <h1 className="mb-6 text-xl font-semibold text-stone-900">Mood board</h1>
+      <div className="mx-auto max-w-5xl px-8 py-6">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-stone-900">Moodboard</h1>
+          {board && (
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={exporting}
+              className="inline-flex items-center rounded-md bg-stone-900 px-4 py-2 text-sm font-medium text-white hover:bg-stone-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {exporting ? "Exporting..." : "Export"}
+            </button>
+          )}
+        </div>
 
         {error && (
           <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -132,59 +154,51 @@ export default function BoardPage() {
         )}
 
         {board && (
-            <div
-              className="relative mx-auto w-full overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm"
-              style={{
-                aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
-              }}
-            >
-              {board.layout_data.map((el, i) => {
-                const style: React.CSSProperties = {
-                  position: "absolute",
-                  left: `${(el.x / CANVAS_WIDTH) * 100}%`,
-                  top: `${(el.y / CANVAS_HEIGHT) * 100}%`,
-                  width: `${(el.w / CANVAS_WIDTH) * 100}%`,
-                  height: `${(el.h / CANVAS_HEIGHT) * 100}%`,
-                };
+          <div
+            ref={boardRef}
+            className="box-border grid gap-3 rounded-lg border border-stone-200 bg-white p-4 shadow-sm"
+            style={{
+              height: "calc(100vh - 190px)",
+              minHeight: 420,
+              gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+            }}
+          >
+            {textEls.map((el, i) => (
+              <div
+                key={`t-${i}`}
+                className="flex min-h-0 items-center justify-center rounded-md bg-stone-900 px-4 text-center"
+              >
+                <p className="text-sm font-medium text-white">{el.content}</p>
+              </div>
+            ))}
 
-                if (el.type === "image") {
-                  const url = imageUrlFor(el.ref);
-                  return url ? (
-                    <img
-                      key={i}
-                      src={url}
-                      alt=""
-                      style={style}
-                      className="rounded-md object-cover"
-                    />
-                  ) : null;
-                }
+            {imageEls.map((el, i) => (
+              <div
+                key={`i-${i}`}
+                className="min-h-0 overflow-hidden rounded-md bg-stone-100"
+              >
+                <img
+                  src={imageUrlFor(el.ref)}
+                  alt=""
+                  crossOrigin="anonymous"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ))}
 
-                if (el.type === "swatch") {
-                  return (
-                    <div
-                      key={i}
-                      style={{ ...style, backgroundColor: el.color }}
-                      className="rounded-md"
-                    />
-                  );
-                }
-
-                if (el.type === "text") {
-                  return (
-                    <div
-                      key={i}
-                      style={style}
-                      className="flex items-center justify-center rounded-md bg-stone-900 p-3 text-center"
-                    >
-                      <p className="text-sm font-medium text-white">{el.content}</p>
-                    </div>
-                  );
-                }
-
-                return null;
-              })}
-            </div>
+            {swatchEls.length > 0 && (
+              <div className="flex min-h-0 gap-2">
+                {swatchEls.map((el, i) => (
+                  <div
+                    key={`s-${i}`}
+                    style={{ backgroundColor: el.color }}
+                    className="h-full flex-1 rounded-md border border-stone-200"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </main>
